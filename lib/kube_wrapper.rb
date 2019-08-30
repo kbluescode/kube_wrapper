@@ -8,8 +8,8 @@ module KubeWrapper
   class << self
     def run
       runner = Runner.new
-      runner.on(:start) { puts "Starting Kubernetes Wrapper" }
-      runner.on(:exit) { puts "Exiting Kubernetes Wrapper" }
+      runner.on(:start) { puts 'Starting Kubernetes Wrapper' }
+      runner.on(:exit) { puts 'Exiting Kubernetes Wrapper' }
       runner.start!
     end
   end

@@ -1,28 +1,22 @@
 require 'shellwords'
 
 module KubeWrapper
+  # Runner creates a REPL to run kubectl commands
   class Runner
     COLORS = {
       red: "\e[31m".freeze,
-      cyan: "\e[36m".freeze,
-    }
+      cyan: "\e[36m".freeze
+    }.freeze
 
     attr_reader :namespace
 
-    def initialize(verbose=false)
+    def initialize
       @namespace = 'default'
-      @verbose = verbose
       @callbacks = {}
     end
 
     def on(key, &block)
       @callbacks[key] = block
-    end
-
-    def exit!
-      puts
-      @callbacks[:exit].call
-      exit
     end
 
     def start!
@@ -31,6 +25,12 @@ module KubeWrapper
     end
 
     private
+
+    def exit!
+      puts
+      @callbacks[:exit].call
+      exit
+    end
 
     def print_cyan(text)
       print_color(text, COLORS[:cyan])
@@ -45,25 +45,31 @@ module KubeWrapper
     end
 
     def print_help
-      puts "halp"
+      puts 'halp'
     end
 
-    def run
-      print_cyan "kubectl -n #{namespace} "
-      begin
-        input = gets.chomp.split(' ')
-      rescue NoMethodError, Interrupt
-        exit!
-      end
-      puts "you gave '#{input}'" if @verbose
+    def fetch_input
+      gets.chomp.split(' ')
+    rescue NoMethodError, Interrupt
+      exit!
+    end
+
+    def handle_input(input)
       case input.first
-      when '?','-h','--help'
+      when '?', '-h', '--help'
         print_help
-      when 'set-n'
+      when 'set-n', '-n', '--namespace'
         @namespace = input[1]
       else
         puts `kubectl -n #{namespace} #{input.join(' ')}`
       end
+      nil
+    end
+
+    def run
+      print_cyan "kubectl -n #{namespace} "
+      input = fetch_input
+      handle_input(input)
     end
   end
 end
