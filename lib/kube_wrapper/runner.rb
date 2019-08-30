@@ -1,5 +1,3 @@
-require 'shellwords'
-
 module KubeWrapper
   # Runner creates a REPL to run kubectl commands
   class Runner
@@ -10,7 +8,9 @@ module KubeWrapper
 
     attr_reader :namespace
 
-    def initialize
+    def initialize(io_in = STDIN, io_out = STDOUT)
+      @io_in = io_in
+      @io_out = io_out
       @namespace = 'default'
       @callbacks = {}
     end
@@ -20,15 +20,17 @@ module KubeWrapper
     end
 
     def start!
-      @callbacks[:start].call
+      cb = @callbacks[:start]
+      cb.call if cb
       loop { run }
     end
 
     private
 
     def exit!
-      puts
-      @callbacks[:exit].call
+      @io_out.puts
+      cb = @callbacks[:exit]
+      cb.call if cb
       exit
     end
 
@@ -41,15 +43,15 @@ module KubeWrapper
     end
 
     def print_color(text, color)
-      print "#{color}#{text}\e[0m"
+      @io_out.print "#{color}#{text}\e[0m"
     end
 
     def print_help
-      puts 'halp'
+      @io_out.puts 'halp'
     end
 
     def fetch_input
-      gets.chomp.split(' ')
+      @io_in.gets.chomp.split(' ')
     rescue NoMethodError, Interrupt
       exit!
     end
@@ -61,7 +63,7 @@ module KubeWrapper
       when 'set-n', '-n', '--namespace'
         @namespace = input[1]
       else
-        puts `kubectl -n #{namespace} #{input.join(' ')}`
+        @io_out.puts `kubectl -n #{namespace} #{input.join(' ')}`
       end
       nil
     end

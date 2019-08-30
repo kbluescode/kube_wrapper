@@ -1,4 +1,5 @@
 require 'bundler/setup'
+require 'byebug'
 require 'kube_wrapper'
 
 RSpec.configure do |config|
