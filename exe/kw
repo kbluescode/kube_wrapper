@@ -1,0 +1,3 @@
+#!/usr/bin/env ruby
+require 'kube_wrapper'
+KubeWrapper.run
