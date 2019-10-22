@@ -4,7 +4,10 @@ MAINTAINER Kevin Blues <kevin@thinkific.com>
 RUN apk update && apk add --no-cache \
   bash \
   dumb-init \
-  git
+  gcc \
+  git \
+  libc-dev \
+  make
 RUN gem install bundler -v '~> 1'
 WORKDIR /root
 COPY . /root
