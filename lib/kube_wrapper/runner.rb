@@ -1,9 +1,26 @@
+require 'kube_wrapper/colors'
+require 'shellwords'
+
 module KubeWrapper
   # Runner creates a REPL to run kubectl commands
   class Runner
-    COLORS = {
-      red: "\e[31m".freeze,
-      cyan: "\e[36m".freeze
+    include KubeWrapper::Colors
+
+    COMMANDS = {
+      help: {
+        cmds: ['?', '-h', '--help'],
+        blurb: 'Prints this help blurb'
+      },
+      set_namespace: {
+        cmds: ['set-n', '-n'],
+        blurb: <<~DESC
+          Changes namespace prefix for further commands to $1. Defaults to `default`
+        DESC
+      },
+      clear: {
+        cmds: %w[cl clear],
+        blurb: 'Clears the screen'
+      }
     }.freeze
 
     attr_reader :namespace
@@ -20,8 +37,8 @@ module KubeWrapper
     end
 
     def start!
-      cb = @callbacks[:start]
-      cb.call if cb
+      @callbacks[:start]&.call
+      print_help
       loop { run }
     end
 
@@ -29,17 +46,14 @@ module KubeWrapper
 
     def exit!
       @io_out.puts
-      cb = @callbacks[:exit]
-      cb.call if cb
+      @callbacks[:exit]&.call
       exit
     end
 
-    def print_cyan(text)
-      print_color(text, COLORS[:cyan])
+    def print_help
+      COMMANDS.each do |_, cmd|
+        @io_out.puts "#{cmd[:cmds]}: #{cmd[:blurb]}"
     end
-
-    def print_red(text)
-      print_color(text, COLORS[:red])
     end
 
     def print_color(text, color)
@@ -56,14 +70,18 @@ module KubeWrapper
       exit!
     end
 
+    def update_namespace!(namespace)
+      @namespace = namespace || 'default'
+      @io_out.puts "Namespace set to #{@namespace}"
+    end
+
     def handle_input(input)
       case input.first
-      when '?', '-h', '--help'
-        print_help
-      when 'set-n', '-n', '--namespace'
-        @namespace = input[1]
+      when *COMMANDS[:help][:cmds] then print_help
+      when *COMMANDS[:set_namespace][:cmds] then update_namespace!(input[1])
+      when *COMMANDS[:clear][:cmds] then print "\e[2J\e[f"
       else
-        @io_out.puts `kubectl -n #{namespace} #{input.join(' ')}`
+        @io_out.puts `kubectl -n #{namespace} #{Shellwords.shelljoin(input)}`
       end
       nil
     end
