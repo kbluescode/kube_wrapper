@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'kube_wrapper/colors'
 require 'shellwords'
 
@@ -53,15 +55,7 @@ module KubeWrapper
     def print_help
       COMMANDS.each do |_, cmd|
         @io_out.puts "#{cmd[:cmds]}: #{cmd[:blurb]}"
-    end
-    end
-
-    def print_color(text, color)
-      @io_out.print "#{color}#{text}\e[0m"
-    end
-
-    def print_help
-      @io_out.puts 'halp'
+      end
     end
 
     def fetch_input

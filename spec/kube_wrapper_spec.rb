@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 RSpec.describe KubeWrapper do
   it 'has a version number' do
     expect(KubeWrapper::VERSION).not_to be nil

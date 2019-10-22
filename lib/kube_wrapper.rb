@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'kube_wrapper/version'
 require 'kube_wrapper/runner'
 
