@@ -4,8 +4,9 @@ module KubeWrapper
   # Colors handles printing colored text to output
   module Colors
     COLORS = {
+      cyan: "\e[36m",
       red: "\e[31m",
-      cyan: "\e[36m"
+      yellow: "\e[33m"
     }.freeze
 
     def print_cyan(text)
@@ -15,6 +16,12 @@ module KubeWrapper
     def print_red(text)
       print_color(text, COLORS[:red])
     end
+
+    def print_yellow(text)
+      print_color(text, COLORS[:yellow])
+    end
+
+    private
 
     def print_color(text, color)
       @io_out.print "#{color}#{text}\e[0m"

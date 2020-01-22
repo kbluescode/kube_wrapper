@@ -22,15 +22,22 @@ module KubeWrapper
       clear: {
         cmds: %w[cl clear],
         blurb: 'Clears the screen'
+      },
+      set_context: {
+        cmds: ['set-c', '-c'],
+        blurb: <<~DESC
+          Changes kubernetes context. Pass nothing to print all available contexts
+        DESC
       }
     }.freeze
 
-    attr_reader :namespace
+    attr_reader :context, :namespace
 
     def initialize(io_in = STDIN, io_out = STDOUT)
       @io_in = io_in
       @io_out = io_out
       @namespace = 'default'
+      @context = `kubectl config current-context`.chomp
       @callbacks = {}
     end
 
@@ -64,23 +71,38 @@ module KubeWrapper
       exit!
     end
 
+    def update_context!(context)
+      if context.nil? || context.empty?
+        puts `kubectl config get-contexts`
+        return
+      end
+
+      context = Shellwords.escape(context)
+      result = `kubectl config use-context #{context}`
+      return if result.empty?
+
+      @io_out.puts "Context set to #{context}"
+      @context = context
+    end
+
     def update_namespace!(namespace)
       @namespace = namespace || 'default'
       @io_out.puts "Namespace set to #{@namespace}"
     end
 
-    def handle_input(input)
+    def handle_input(input) # rubocop:disable Metrics/AbcSize
       case input.first
       when *COMMANDS[:help][:cmds] then print_help
       when *COMMANDS[:set_namespace][:cmds] then update_namespace!(input[1])
-      when *COMMANDS[:clear][:cmds] then print "\e[2J\e[f"
+      when *COMMANDS[:clear][:cmds] then @io_out.print "\e[2J\e[f"
+      when *COMMANDS[:set_context][:cmds] then update_context!(input[1])
       else
         @io_out.puts `kubectl -n #{namespace} #{Shellwords.shelljoin(input)}`
       end
-      nil
     end
 
     def run
+      print_yellow "(#{context}) "
       print_cyan "kubectl -n #{namespace} "
       input = fetch_input
       handle_input(input)
