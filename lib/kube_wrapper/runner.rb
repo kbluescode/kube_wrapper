@@ -16,7 +16,8 @@ module KubeWrapper
       set_namespace: {
         cmds: ['set-n', '-n'],
         blurb: <<~DESC
-          Changes namespace prefix for further commands to $1. Defaults to `default`
+          Changes namespace prefix for further commands to $1. \
+          Pass nothing to print all available namespaces
         DESC
       },
       clear: {
@@ -26,7 +27,8 @@ module KubeWrapper
       set_context: {
         cmds: ['set-c', '-c'],
         blurb: <<~DESC
-          Changes kubernetes context. Pass nothing to print all available contexts
+          Changes kubernetes context. \
+          Pass nothing to print all available contexts
         DESC
       }
     }.freeze
@@ -86,7 +88,12 @@ module KubeWrapper
     end
 
     def update_namespace!(namespace)
-      @namespace = namespace || 'default'
+      if namespace.nil? || namespace.empty?
+        puts `kubectl get ns`
+        return
+      end
+
+      @namespace = namespace
       @io_out.puts "Namespace set to #{@namespace}"
     end
 
